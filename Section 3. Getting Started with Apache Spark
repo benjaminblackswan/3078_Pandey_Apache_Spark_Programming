@@ -1,0 +1,299 @@
+# Databricks notebook source
+from pyspark.sql.functions import *
+
+# COMMAND ----------
+
+raw_fire_df = spark.read \
+                .format("csv") \
+                .option("header", "true") \
+                .option("inferSchema", "true") \
+                .load("/databricks-datasets/learning-spark-v2/sf-fire/sf-fire-calls.csv")
+display(raw_fire_df)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from fire_service_calls_view
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC create database if not exists demo_db
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC create table if not exists demo_db.fire_service_calls_tbl(
+# MAGIC CallNumber Integer,
+# MAGIC UnitID String,
+# MAGIC IncidentNumber Integer,
+# MAGIC CallType String,
+# MAGIC CallDate String,
+# MAGIC WatchDate String,
+# MAGIC CallFinalDisposition String,
+# MAGIC AvailableDtTm String,
+# MAGIC Address String,
+# MAGIC City String,
+# MAGIC Zipcode Integer,
+# MAGIC Battalion String,
+# MAGIC StationArea String,
+# MAGIC Box String,
+# MAGIC OriginalPriority String,
+# MAGIC Priority String,
+# MAGIC FinalPriority Integer,
+# MAGIC ALSUnit Boolean,
+# MAGIC CallTypeGroup String,
+# MAGIC NumAlarms Integer,
+# MAGIC UnitType String,
+# MAGIC UnitSequenceInCallDispatch Integer,
+# MAGIC FirePreventionDistrict String,
+# MAGIC SupervisorDistrict String,
+# MAGIC Neighborhood String,
+# MAGIC Location String,
+# MAGIC RowID String,
+# MAGIC Delay Float
+# MAGIC ) using delta
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC insert into demo_db.fire_service_calls_tbl
+# MAGIC values(
+# MAGIC 1234,
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null, 
+# MAGIC null)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from demo_db.fire_service_calls_tbl
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC truncate table demo_db.fire_service_calls_tbl
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from fire_service_calls_view
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC insert into demo_db.fire_service_calls_tbl
+# MAGIC select * from fire_service_calls_view
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from demo_db.fire_service_calls_tbl
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select count(*) from demo_db.fire_service_calls_tbl
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select count(distinct CallType) from demo_db.fire_service_calls_tbl
+# MAGIC where CallType is not null
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select distinct CallType from demo_db.fire_service_calls_tbl
+# MAGIC where CallType is not null
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select callnumber, delay from demo_db.fire_service_calls_tbl
+# MAGIC where delay > 5
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select calltype, count(*) as count
+# MAGIC from demo_db.fire_service_calls_tbl
+# MAGIC group by CallType
+# MAGIC order by count desc
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select calltype, zipcode, count(*) as count
+# MAGIC from demo_db.fire_service_calls_tbl
+# MAGIC group by CallType, Zipcode
+# MAGIC order by count desc
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select zipcode, neighborhood
+# MAGIC from demo_db.fire_service_calls_tbl
+# MAGIC where zipcode in (94102, 94103)
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select sum(NumAlarms), avg(Delay), min(delay), max(delay)
+# MAGIC from demo_db.fire_service_calls_tbl
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select distinct year(cast(CallDate as date)) as year_num from demo_db.fire_service_calls_tbl
+# MAGIC order by year_num
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select distinct CallDate, cast(CallDate as date), to_date(calldate, "MM/dd/yyyy"), year(cast(CallDate as date)) as year_num
+# MAGIC from demo_db.fire_service_calls_tbl
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select to_date(calldate, "dd/mm/yyyy") from demo_db.fire_service_calls_tbl
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select weekofyear(to_date(callDate, "yyyy-mm-dd")) as week_year, Count(*) as count
+# MAGIC from demo_db.fire_service_calls_tbl
+# MAGIC where group by week_year
+# MAGIC order by count desc
+
+# COMMAND ----------
+
+display(raw_fire_df)
+
+# COMMAND ----------
+
+renamed_fire_df = raw_fire_df \
+    .withColumnRenamed("Call Number", "CallNumber") \
+    .withColumnRenamed("Unit ID", "UnitID") \
+    .withColumnRenamed("Incident Number", "IncidentNumber") \
+    .withColumnRenamed("Call Type", "CallType") \
+    .withColumnRenamed("Call Date", "CallDate") \
+    .withColumnRenamed("Watch Date", "WatchDate") \
+    .withColumnRenamed("Call Final Disposition", "CallFinalDisposition") \
+    .withColumnRenamed("Available DtTm", "AvailableDtTm") \
+    .withColumnRenamed("Address", "Address") \
+    .withColumnRenamed("City", "City") \
+    .withColumnRenamed("Zipcode of Incident", "Zipcode") \
+    .withColumnRenamed("Battalion", "Battalion") \
+    .withColumnRenamed("Station Area", "StationArea") \
+    .withColumnRenamed("Box", "Box") \
+    .withColumnRenamed("OrigPriority", "OrigPriority") \
+    .withColumnRenamed("Priority", "Priority") \
+    .withColumnRenamed("Final Priority", "FinalPriority") \
+    .withColumnRenamed("ALS Unit", "ALSUnit") \
+    .withColumnRenamed("Call Type Group", "CallTypeGroup") \
+    .withColumnRenamed("NumAlarms", "NumAlarms") \
+    .withColumnRenamed("Unit Type", "UnitType") \
+    .withColumnRenamed("Unit sequence in call dispatch", "UnitSequenceInCallDispatch") \
+    .withColumnRenamed("Fire Prevention District", "FirePreventionDistrict") \
+    .withColumnRenamed("Supervisor District", "SupervisorDistrict") \
+    .withColumnRenamed("Neighborhood", "Neighborhood") \
+    .withColumnRenamed("Location", "Location") \
+    .withColumnRenamed("Row ID", "RowID") \
+    .withColumnRenamed("Delay", "Delay")
+
+# COMMAND ----------
+
+display(renamed_fire_df)
+
+# COMMAND ----------
+
+renamed_fire_df.printSchema()
+
+# COMMAND ----------
+
+fire_df = renamed_fire_df \
+    .withColumn("CallDate", to_date("CallDate", "yyyy-mm-dd")) \
+    .withColumn("WatchDate", to_date("WatchDate", "yyyy-mm-dd")) \
+    .withColumn("AvailableDtTm", to_timestamp("AvailableDtTm", "MM/dd/yyyy hh:mm:ss a")) \
+    .withColumn("Delay", round("Delay", 2))
+
+display(fire_df)
+    
+
+# COMMAND ----------
+
+fire_df.printSchema()
+
+# COMMAND ----------
+
+fire_df.cache()
+
+# COMMAND ----------
+
+fire_df.createOrReplaceTempView("fire_service_calls_view")
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select * from fire_service_calls_view limit 10
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC select count(distinct CallType) as distinct_calltype_count
+# MAGIC from fire_service_calls_view
+# MAGIC where CallType is not null
+
+# COMMAND ----------
+
+ql_sql_df = spark.sql("""
+                        select count(distinct CallType) as distinct_calltype_count
+                        from fire_service_calls_view
+                        where CallType is not null
+                      """)
+
+display(ql_sql_df)
+
+# COMMAND ----------
+
+q1_df = fire_df.where("CallType is not null") \
+                .select("CallType") \
+                .distinct()
+print(q1_df.count())
+
+# COMMAND ----------
+
+q1_df1 = fire_df.where("CallType is not null")
+q1_df2 = q1_df1.select("CallType")
+q1_df3 = q1_df2.distinct()
+
+print(q1_df3.count())
+
+# COMMAND ----------
+
